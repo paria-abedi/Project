@@ -1,0 +1,9 @@
+import * as React from 'react';
+import { SVGProps } from 'react';
+
+const SvgLeftIcon = (props: SVGProps<SVGSVGElement>) => (
+   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="11" viewBox="0 0 12 11" fill="none"{...props}>
+<path fillRule="evenodd" clipRule="evenodd" d="M5.31042 0.856167C5.51871 1.06444 5.51871 1.40213 5.31042 1.61041L1.95422 4.96662H11.3333C11.6278 4.96662 11.8666 5.2054 11.8666 5.49995C11.8666 5.7945 11.6278 6.03329 11.3333 6.03329H1.95422L5.31042 9.38945C5.51871 9.59777 5.51871 9.93547 5.31042 10.1438C5.10215 10.352 4.76446 10.352 4.55618 10.1438L0.289517 5.87707C0.0812288 5.6688 0.0812288 5.33111 0.289517 5.12283L4.55618 0.856167C4.76446 0.647879 5.10215 0.647879 5.31042 0.856167Z" fill="#149DE1"/>
+</svg>
+);
+export default SvgLeftIcon;

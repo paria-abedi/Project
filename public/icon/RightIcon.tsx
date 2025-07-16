@@ -1,0 +1,10 @@
+import * as React from 'react';
+import { SVGProps } from 'react';
+
+const SvgRightIcon = (props: SVGProps<SVGSVGElement>) => (
+   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="11" viewBox="0 0 12 11" fill="none"{...props}>
+<path fillRule="evenodd" clipRule="evenodd" d="M6.68951 0.856167C6.89779 0.647879 7.23548 0.647879 7.44375 0.856167L11.7105 5.12283C11.9187 5.33111 11.9187 5.6688 11.7105 5.87707L7.44375 10.1438C7.23548 10.352 6.89779 10.352 6.68951 10.1438C6.48123 9.93547 6.48123 9.59777 6.68951 9.38945L10.0457 6.03329H0.666634C0.372085 6.03329 0.133301 5.7945 0.133301 5.49995C0.133301 5.2054 0.372085 4.96662 0.666634 4.96662H10.0457L6.68951 1.61041C6.48123 1.40213 6.48123 1.06444 6.68951 0.856167Z" fill="#149DE1"/>
+</svg>
+);
+export default SvgRightIcon;
+
