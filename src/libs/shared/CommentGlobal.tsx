@@ -1,5 +1,5 @@
 "use client";
-import { Button, Flex, Typography } from "@/primitives";
+import { Flex, Typography } from "@/primitives";
 import { colorPalette } from "../theme/colorPalette";
 import { IconButton } from "@mui/material";
 import SvgReply from "../../../public/icon/Reply";
@@ -9,6 +9,8 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import { useComments } from "../hooks/useComment";
 import EditModal from "@/components/EditModal";
+import SvgDelete from "../../../public/icon/Delete";
+import SvgVector from "../../../public/icon/Vector";
 
 type Comment = {
   name: string;
@@ -137,17 +139,18 @@ const CommentGlobal = () => {
                   right={"4px"}
                   direction={"row"}
                 >
-                  <Button onClick={() => deleteComment(comment.id)}>
-                    Delete
-                  </Button>
-                  <Button
+                  <IconButton onClick={() => deleteComment(comment.id)}>
+                    <SvgDelete />
+                  </IconButton>
+
+                  <IconButton
                     onClick={() => {
                       setSelectedComment(comment);
                       setEditModalOpen(true);
                     }}
                   >
-                    Edit
-                  </Button>
+                    <SvgVector />
+                  </IconButton>
                 </Flex>
                 <Flex direction={"row"} padding={"4px"} gap={"10px"}>
                   <Flex>
