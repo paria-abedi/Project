@@ -10,6 +10,7 @@ type Comment = {
   comment: string;
   avatar: string;
   userId: string;
+  id:string
 };
 const fetchComments = async ({ pageParam = 1 }) => {
   const limit = 10;
@@ -34,7 +35,7 @@ const userId = "user-1234";
     getNextPageParam: (lastPage) => lastPage.nextPage,
     initialPageParam: 1,
   });
-
+//  post service
  const addCommentMutation = useMutation({
   mutationFn: (newComment: Comment & { userId: string }): Promise<AxiosResponse<any>> =>
     clientApiManager.post("", newComment),
@@ -57,9 +58,7 @@ const userId = "user-1234";
     });
   },
 });
-
-
-  const apiComments = data?.pages.flatMap((page) => page.data) ?? [];
+const apiComments = data?.pages.flatMap((page) => page.data) ?? [];
 
   const addComment = useCallback(
   (newComment: Comment) => {
@@ -68,12 +67,66 @@ const userId = "user-1234";
   },
   [addCommentMutation]
 );
+//  delete service
+const deleteCommentMutation=useMutation({
+  mutationFn:(id:string)=>clientApiManager.delete(`/${id}`),
+  onSuccess:(_,id)=>{
+    queryClient.setQueryData(['comments'], (oldData: any)=>{
+      if(!oldData) return oldData;
+      return{
+        ...oldData,
+        pages:oldData.pages.map((page:any)=>({
+          ...page,
+          data:page.data.filter((comment:Comment)=>comment.id !== id),
+        }))
+      }
+    })
+  }
+});
+const deleteComment=useCallback(
+  (id:string)=>{
+    deleteCommentMutation.mutate(id);
+  },
+  [deleteCommentMutation]
+);
+// edit service
+const editCommentMutation =useMutation({
+  
+  mutationFn:({id,updatedComment}:{id:string; updatedComment: Partial<Comment>})=>
+    clientApiManager.put(`/${id}`,updatedComment),
+  onSuccess:(res,{id})=>{
+    const updated=res.data;
+    queryClient.setQueryData(['comments'],(oldData:any)=>{
+      if(!oldData) return oldData;
+      return{
+        ...oldData,
+        pages:oldData.pages.map((page:any)=>({
+          ...page,
+          data:page.data.map((comment:Comment)=>
+          comment.id === id ? updated:comment)
+        }))
+      }
+    })
+    
+  }
+})
+const editComment=useCallback(
+   (id: string, updatedComment: Partial<Comment>) =>{
+    editCommentMutation.mutate({id,updatedComment});
+   },
+   [editCommentMutation]
+)
+
   return {
     allComments: apiComments,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
     addComment,
+     deleteComment,
+    editComment,
     isAddingComment: addCommentMutation.isPending,
+     isDeletingComment: deleteCommentMutation.isPending,
+    isEditingComment: editCommentMutation.isPending,
   };
 }
