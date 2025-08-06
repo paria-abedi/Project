@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import useDeviceType from "@/libs/hooks/useDeviceType";
 import { Flex } from "@/primitives";
 import {
@@ -26,13 +27,23 @@ const ModalOrigin = ({ open, onClose, onSelect }: CountryModalProps) => {
 
   useEffect(() => {
     if (!open) return;
-    const fetchCountries = async () => {
-      const res = await fetch("https://restcountries.com/v3.1/all");
-      const data = await res.json();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const countryName = data.map((c: any) => c.name.common).sort();
-      setCountries(countryName);
-    };
+   const fetchCountries = async () => {
+  try {
+    const res = await fetch("https://corsproxy.io/?https://www.apicountries.com/countries");
+    if (!res.ok) throw new Error("API failed");
+
+    const data = await res.json();
+  
+    const countryName = data
+      .filter((c: any) => c.name)
+      .map((c: any) => c.name)
+      .sort();
+    setCountries(countryName);
+  } catch (error) {
+    console.error("Error fetching countries:", error);
+  }
+};
+
     fetchCountries();
   }, [open]);
 

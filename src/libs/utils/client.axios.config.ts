@@ -5,3 +5,12 @@ export const clientApiManager = axios.create({
       'Content-Type': 'application/json',
     },
   });
+
+export const clientApi = axios.create({
+    baseURL:'https://68905f24944bf437b595a605.mockapi.io/',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  

@@ -12,6 +12,9 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import * as yup from "yup";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { useMutation } from "@tanstack/react-query";
+import { LoginEmail } from "@/api/auth/auth";
+import Cookies from "js-cookie";
 
 const schema = yup.object().shape({
   email: yup
@@ -36,10 +39,17 @@ const VerifyEmail = () => {
     mode: "onChange",
   });
 
+const {mutate}=useMutation({
+  mutationFn:LoginEmail,
+  onSuccess:(user)=>{
+    Cookies.set("user",JSON.stringify(user),{expires:2});
+     router.push("/auth/login/verifyCode");
+  }
+})
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleLogin = (data: any) => {
-    router.push("/auth/login/verifyCode");
-    console.log("Form submitted:", data);
+  const handleLogin = (data:{email:string;password:string}) => {
+    mutate(data);
   };
   const handlePassword = () => {
     router.push("/auth/changePassword/email");

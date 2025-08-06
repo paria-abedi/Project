@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import useDeviceType from "@/libs/hooks/useDeviceType";
 import { Button, Flex } from "@/primitives";
 import { useForm, Controller } from "react-hook-form";
@@ -5,16 +6,19 @@ import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Drawer, Fade, IconButton, Input, Typography } from "@mui/material";
 import Modal from "@mui/material/Modal";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { colorPalette } from "@/libs/theme";
 import SvgClosee from "../../../../public/icon/Closee";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import { useMutation } from "@tanstack/react-query";
+import { ChangePassword } from "@/api/auth/auth";
+import Cookies from "js-cookie";
 const schema = yup.object().shape({
-  oldPassword: yup
-    .string()
-    .required("Password is required")
-    .min(6, "Minimum 6 characters"),
+  // oldPassword: yup
+  //   .string()
+  //   .required("Password is required")
+  //   .min(6, "Minimum 6 characters"),
   password: yup
     .string()
     .required("Password is required")
@@ -24,13 +28,38 @@ const schema = yup.object().shape({
     .oneOf([yup.ref("password")], "Passwords must match")
     .required("Confirm your password"),
 });
+type User = {
+  id: string;
+  username: string;
+  email: string;
+  // country:string;
+  // password:string;
+  gender: string;
+  birthday: any;
+  avatar: any;
+};
+
+
 const ModalBtn = () => {
   const [show, setShow] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
- const [oldShow,setOldShow]=useState(false);
+  // const [oldShow, setOldShow] = useState(false);
   const [open, setOpen] = useState(false);
   const [openModal, setOpenModal] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
   const { isMobile } = useDeviceType();
+  useEffect(() => {
+    const cookieUser = Cookies.get("user");
+    if (cookieUser) {
+      try {
+        const parsed = JSON.parse(cookieUser);
+        setUser(parsed);
+      } catch (e) {
+        console.log(e, "Error parsing user cookie");
+      }
+    }
+  }, []);
+
   const {
     handleSubmit,
     control,
@@ -39,26 +68,65 @@ const ModalBtn = () => {
     resolver: yupResolver(schema),
     mode: "onChange",
     defaultValues: {
-      oldPassword: "",
+      // oldPassword: "",
       password: "",
       confirmPassword: "",
     },
   });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const onSubmit = (data: any) => {
-    console.log(data);
+
+  // const mutation = useMutation({
+  //   mutationFn: ({
+  //     id,
+  //     // oldPassword,
+  //     password,
+  //   }: {
+  //     id: string;
+  //     // oldPassword: string;
+  //     password: string;
+  //   }) => {
+  //     return ChangePassword(id, password);
+  //   },
+  //   onSuccess: () => {
+  //     alert("Password changed successfully");
+  //     setOpenModal(false);
+  //     setOpen(false);
+  //   },
+  //   onError: (error: any) => {
+  //     console.log("Error changing password:", error);
+  //     alert(
+  //       "Failed to change password. Please check your old password and try again."
+  //     );
+  //   },
+  // });
+
+const mutation = useMutation({
+  mutationFn: (password: string) => {
+    if (!user) throw new Error("User not found");
+    return ChangePassword(user.id, password);
+  },
+  onSuccess: () => {
+    alert("Password changed successfully");
     setOpenModal(false);
     setOpen(false);
-  };
+  },
+  onError: (error: any) => {
+    console.log("Error changing password:", error);
+    alert("Failed to change password");
+  },
+});
+
+  const onSubmit = (data: any) => {
+  mutation.mutate(data.password);
+};
   const handleShowConfirm = () => {
     setShowConfirm(!showConfirm);
   };
   const handleShow = () => {
     setShow(!show);
   };
-  const handleOldShow=()=>{
-    setOldShow(!oldShow);
-  }
+  // const handleOldShow = () => {
+  //   setOldShow(!oldShow);
+  // };
 
   return (
     <Flex>
@@ -91,42 +159,7 @@ const ModalBtn = () => {
               component="form"
               onSubmit={handleSubmit(onSubmit)}
             >
-              <Controller
-                name="oldPassword"
-                control={control}
-                defaultValue=""
-                render={({ field }) => (
-                  <>
-                    <Input
-                      {...field}
-                      placeholder="Old Password"
-                      type={oldShow ? "text" : "password"}
-                  endAdornment={
-                    <IconButton onClick={handleOldShow} sx={{ color: "#149DE1" }}>
-                      {oldShow ? <VisibilityIcon /> : <VisibilityOffIcon />}
-                    </IconButton>
-                  }
-                      disableUnderline
-                      sx={{
-                        padding: "11.5px 16px",
-                        color: "#888888",
-                        backgroundColor: "#212121",
-                        borderRadius: "8px",
-                      }}
-                    />
-                    {errors.oldPassword && (
-                      <Typography
-                        variant="caption"
-                        color={colorPalette.red[3]}
-                        textAlign={"start"}
-                        marginLeft={"5px"}
-                      >
-                        {errors.oldPassword.message}
-                      </Typography>
-                    )}
-                  </>
-                )}
-              />
+             
               <Controller
                 name="password"
                 control={control}
@@ -137,11 +170,14 @@ const ModalBtn = () => {
                       {...field}
                       placeholder="New Password "
                       type={show ? "text" : "password"}
-                  endAdornment={
-                    <IconButton onClick={handleShow} sx={{ color: "#149DE1" }}>
-                      {show ? <VisibilityIcon /> : <VisibilityOffIcon />}
-                    </IconButton>
-                  }
+                      endAdornment={
+                        <IconButton
+                          onClick={handleShow}
+                          sx={{ color: "#149DE1" }}
+                        >
+                          {show ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                        </IconButton>
+                      }
                       disableUnderline
                       sx={{
                         padding: "11.5px 16px",
@@ -153,7 +189,7 @@ const ModalBtn = () => {
                     {errors.password && (
                       <Typography
                         variant="caption"
-                       color={colorPalette.red[3]}
+                        color={colorPalette.red[3]}
                         textAlign={"start"}
                         marginLeft={"5px"}
                       >
@@ -172,12 +208,19 @@ const ModalBtn = () => {
                     <Input
                       {...field}
                       placeholder="Confirm New Password"
-                     type={showConfirm ? "text" : "password"}
-                  endAdornment={
-                    <IconButton onClick={handleShowConfirm} sx={{ color: "#149DE1" }}>
-                      {showConfirm ? <VisibilityIcon /> : <VisibilityOffIcon />}
-                    </IconButton>
-                  }
+                      type={showConfirm ? "text" : "password"}
+                      endAdornment={
+                        <IconButton
+                          onClick={handleShowConfirm}
+                          sx={{ color: "#149DE1" }}
+                        >
+                          {showConfirm ? (
+                            <VisibilityIcon />
+                          ) : (
+                            <VisibilityOffIcon />
+                          )}
+                        </IconButton>
+                      }
                       disableUnderline
                       sx={{
                         padding: "11.5px 16px",
@@ -189,7 +232,7 @@ const ModalBtn = () => {
                     {errors.confirmPassword && (
                       <Typography
                         variant="caption"
-                      color={colorPalette.red[3]}
+                        color={colorPalette.red[3]}
                         textAlign={"start"}
                         marginLeft={"5px"}
                       >
@@ -256,42 +299,7 @@ const ModalBtn = () => {
                 <Typography variant="h2" color={colorPalette.gray[3]}>
                   Change Password
                 </Typography>
-                <Controller
-                  name="oldPassword"
-                  control={control}
-                  defaultValue=""
-                  render={({ field }) => (
-                    <>
-                      <Input
-                        {...field}
-                        placeholder="Old Password"
-                        type={oldShow ? "text" : "password"}
-                  endAdornment={
-                    <IconButton onClick={handleOldShow} sx={{ color: "#149DE1" }}>
-                      {oldShow ? <VisibilityIcon /> : <VisibilityOffIcon />}
-                    </IconButton>
-                  }
-                        disableUnderline
-                        sx={{
-                          padding: "11.5px 16px",
-                          color: "#888888",
-                          backgroundColor: "#212121",
-                          borderRadius: "8px",
-                        }}
-                      />
-                      {errors.oldPassword && (
-                        <Typography
-                          variant="caption"
-                         color={colorPalette.red[3]}
-                          textAlign={"start"}
-                          marginLeft={"5px"}
-                        >
-                          {errors.oldPassword.message}
-                        </Typography>
-                      )}
-                    </>
-                  )}
-                />
+               
                 <Controller
                   name="password"
                   control={control}
@@ -301,12 +309,15 @@ const ModalBtn = () => {
                       <Input
                         {...field}
                         placeholder="New Password "
-                         type={show ? "text" : "password"}
-                  endAdornment={
-                    <IconButton onClick={handleShow} sx={{ color: "#149DE1" }}>
-                      {show ? <VisibilityIcon /> : <VisibilityOffIcon />}
-                    </IconButton>
-                  }
+                        type={show ? "text" : "password"}
+                        endAdornment={
+                          <IconButton
+                            onClick={handleShow}
+                            sx={{ color: "#149DE1" }}
+                          >
+                            {show ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                          </IconButton>
+                        }
                         disableUnderline
                         sx={{
                           padding: "11.5px 16px",
@@ -318,7 +329,7 @@ const ModalBtn = () => {
                       {errors.password && (
                         <Typography
                           variant="caption"
-                       color={colorPalette.red[3]}
+                          color={colorPalette.red[3]}
                           textAlign={"start"}
                           marginLeft={"5px"}
                         >
@@ -337,12 +348,19 @@ const ModalBtn = () => {
                       <Input
                         {...field}
                         placeholder="Confirm New Password"
-                         type={showConfirm ? "text" : "password"}
-                  endAdornment={
-                    <IconButton onClick={handleShowConfirm} sx={{ color: "#149DE1" }}>
-                      {showConfirm ? <VisibilityIcon /> : <VisibilityOffIcon />}
-                    </IconButton>
-                  }
+                        type={showConfirm ? "text" : "password"}
+                        endAdornment={
+                          <IconButton
+                            onClick={handleShowConfirm}
+                            sx={{ color: "#149DE1" }}
+                          >
+                            {showConfirm ? (
+                              <VisibilityIcon />
+                            ) : (
+                              <VisibilityOffIcon />
+                            )}
+                          </IconButton>
+                        }
                         disableUnderline
                         sx={{
                           padding: "11.5px 16px",
@@ -354,7 +372,7 @@ const ModalBtn = () => {
                       {errors.confirmPassword && (
                         <Typography
                           variant="caption"
-                        color={colorPalette.red[3]}
+                          color={colorPalette.red[3]}
                           textAlign={"start"}
                           marginLeft={"5px"}
                         >

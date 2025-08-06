@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { Button, Flex, Typography } from "@/primitives";
 import { IconButton } from "@mui/material";
@@ -15,9 +16,32 @@ import SvgReply from "../../../public/icon/Reply";
 import { useRouter } from "next/navigation";
 import ModalBtn from "./edit/Modal";
 import { useComments } from "@/libs/hooks/useComment";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Cookies from "js-cookie";
+import { UtilsDate } from "@/libs/utils/utilDate";
 const userId = "user-1234";
+type UserType={
+  email:string;
+  username:string;
+  avatar:any;
+  country:string;
+  gender:string;
+  birthday:any;
+
+}
 const Profile = () => {
+  const [user,setUser]=useState<UserType | null>(null);
+
+   useEffect(()=>{
+    const cookieUser=Cookies.get("user");
+    if(cookieUser){
+      try{
+        setUser(JSON.parse(cookieUser));
+      }catch(e){
+        console.log(e,"Error parsing user cookie")
+      }
+    }
+  },[])
    const { allComments, isFetchingNextPage } = useComments();
   const myComments = useMemo(
     () => allComments.filter((comment) => comment.userId === userId),
@@ -77,6 +101,7 @@ const Profile = () => {
           width={"100%"}
           direction={{ mobile: "column", tablet: "column", laptop: "row" }}
         >
+          
           <Flex
             width={{ mobile: "100%", tablet: "100%", laptop: "45%" }}
             direction={{ mobile: "column", tablet: "column", laptop: "row" }}
@@ -86,7 +111,7 @@ const Profile = () => {
               margin={{ mobile: "auto", tablet: "auto", laptop: "0px" }}
               paddingTop={"12px"}
             >
-              <Image src={img} alt="Icon" />
+              <Image src={user?.avatar || img} alt="Icon" width={'60'} height={'60'} style={{borderRadius:'100%'}} />
             </Flex>
             <Flex
               marginY={{ mobile: "0px", tablet: "0px", laptop: "15px" }}
@@ -105,7 +130,7 @@ const Profile = () => {
                   Your name
                 </Typography>
                 <Typography variant="body2" color={colorPalette.gray[1]}>
-                  Stive Margry
+                  {user?.username}
                 </Typography>
               </Flex>
               <Flex
@@ -121,7 +146,7 @@ const Profile = () => {
                   Gender
                 </Typography>
                 <Typography variant="body2" color={colorPalette.gray[1]}>
-                  Male
+                 {user?.gender}
                 </Typography>
               </Flex>
             </Flex>
@@ -142,7 +167,7 @@ const Profile = () => {
                   Date Of Birth
                 </Typography>
                 <Typography variant="body2" color={colorPalette.gray[1]}>
-                  1996/25/02
+                  {UtilsDate(user?.birthday)}
                 </Typography>
               </Flex>
               <Flex
@@ -162,7 +187,7 @@ const Profile = () => {
                   Email
                 </Typography>
                 <Typography variant="body2" color={colorPalette.gray[1]}>
-                  Example@gmail.com
+                 {user?.email}
                 </Typography>
               </Flex>
             </Flex>

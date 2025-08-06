@@ -26,9 +26,9 @@ const VerifySingUp = () => {
     mode: "onChange",
   });
 
-  const handleConfirm = (data: { code: string }) => {
-    router.push("/");
-    console.log(`${data.code}`);
+  const handleConfirm = () => {
+    router.push("/auth/login/verifyEmail");
+   
   };
   return (
     <Flex

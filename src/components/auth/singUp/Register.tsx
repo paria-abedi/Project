@@ -1,14 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { colorPalette } from "@/libs/theme";
 import { Button, Flex, Typography } from "@/primitives";
 import { useRouter } from "next/navigation";
 import ShittyPetty from "../../../../public/icon/ShittyPetty";
-import {
- 
-  IconButton,
-  Input,
-
-} from "@mui/material";
+import { IconButton, Input } from "@mui/material";
 import SvgEmail from "../../../../public/icon/Email";
 import SvgUser from "../../../../public/icon/User";
 import SvgGloby from "../../../../public/icon/globy";
@@ -23,6 +19,23 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import SvgValidate from "../../../../public/icon/Validate";
 import SvgUnValidate from "../../../../public/icon/UnValidate";
 import ModalOrigin from "./ModalOrigin";
+import { useMutation } from "@tanstack/react-query";
+import { signUpUser } from "@/api/auth/auth";
+
+interface SignUp{
+    id:string;
+  username:string;
+  email:string;
+  country:string;
+  password:string;
+}
+type FormData = {
+  name: string;
+  email: string;
+  origin: string;
+  password: string;
+  confirmPassword: string;
+};
 
 const schema = yup.object().shape({
   name: yup.string().required("Name is required"),
@@ -71,18 +84,33 @@ const Register = () => {
     lower: /[a-z]/.test(password),
     upper: /[A-Z]/.test(password),
   };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const renderCheck = (condition:any) => (
-   <Flex marginTop={'10px'}>
-    {condition ? <SvgUnValidate/> : <SvgValidate/>}
-   </Flex>
+ 
+  const renderCheck = (condition: any) => (
+    <Flex marginTop={"10px"}>
+      {condition ? <SvgUnValidate /> : <SvgValidate />}
+    </Flex>
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const onSubmit = (data: any) => {
-    console.log(data);
+const {mutate}=useMutation({
+  mutationFn:signUpUser,
+  onSuccess:(data)=>{
+    console.log(data,"creat user");
     router.push("/auth/singUp/VerifySingUp");
+  },
+  onError: (error: any) => {
+      console.error(" errorrr", error?.response?.data || error.message);}
+})
+
+  const onSubmit = (data: FormData) => {
+     console.log(data,"creat submiit");
+  const signUpData: SignUp = {
+    username: data.name,
+    email: data.email,
+    country: data.origin,
+    password: data.password,
+    id: "", // اگر نیاز نیست، حذف کن از interface SignUp
   };
+  mutate(signUpData);}
   const handleShowConfirm = () => {
     setShowConfirm(!showConfirm);
   };
@@ -97,7 +125,7 @@ const Register = () => {
         tablet: "16px",
         laptop: "448px",
       }}
-      marginY={'40px'}
+      marginY={"40px"}
       sx={{ backgroundColor: colorPalette.gray[6] }}
     >
       <Flex
@@ -186,28 +214,36 @@ const Register = () => {
             defaultValue=""
             render={({ field }) => (
               <>
-              <Button  onClick={() => setOpen(true)} sx={{
-          width: "100%",
-          minHeight:'50px',
-          backgroundColor: "#212121",
-          color: "#888888",
-          justifyContent: "start",
-          padding: "45px 16px",
-          borderRadius: "12px",
-        }} startIcon={<SvgGloby />}>
-                 {field.value || "Select your origin"}
-              </Button>
-              <ModalOrigin open={open} onClose={()=>setOpen(false)} onSelect={(country) => field.onChange(country)}/>
+                <Button
+                  onClick={() => setOpen(true)}
+                  sx={{
+                    width: "100%",
+                    minHeight: "50px",
+                    backgroundColor: "#212121",
+                    color: "#888888",
+                    justifyContent: "start",
+                    padding: "45px 16px",
+                    borderRadius: "12px",
+                  }}
+                  startIcon={<SvgGloby />}
+                >
+                  {field.value || "Select your origin"}
+                </Button>
+                <ModalOrigin
+                  open={open}
+                  onClose={() => setOpen(false)}
+                  onSelect={(country) => field.onChange(country)}
+                />
                 {errors.origin && (
-        <Typography
-          variant="caption"
-          color={colorPalette.red[3]}
-          textAlign={"start"}
-          marginLeft={"5px"}
-        >
-          {errors.origin.message}
-        </Typography>
-      )}
+                  <Typography
+                    variant="caption"
+                    color={colorPalette.red[3]}
+                    textAlign={"start"}
+                    marginLeft={"5px"}
+                  >
+                    {errors.origin.message}
+                  </Typography>
+                )}
               </>
             )}
           />
@@ -226,7 +262,7 @@ const Register = () => {
                     color: "#888888",
                     backgroundColor: "#212121",
                     borderRadius: "8px",
-                    marginTop:'-12px'
+                    marginTop: "-12px",
                   }}
                   placeholder="Enter new password"
                   startAdornment={<SvgPassword />}
@@ -294,8 +330,8 @@ const Register = () => {
           />
 
           <Flex>
-            <Flex direction={"row"} gap={'8px'}>
-            {renderCheck(passwordConditions.length)}
+            <Flex direction={"row"} gap={"8px"}>
+              {renderCheck(passwordConditions.length)}
               <Typography
                 variant="body1"
                 color={colorPalette.gray[4]}
@@ -304,8 +340,8 @@ const Register = () => {
                 At least 8 characters
               </Typography>
             </Flex>
-            <Flex direction={"row"} gap={'8px'}>
-             {renderCheck(passwordConditions.number)} 
+            <Flex direction={"row"} gap={"8px"}>
+              {renderCheck(passwordConditions.number)}
               <Typography
                 variant="body1"
                 color={colorPalette.gray[4]}
@@ -314,8 +350,10 @@ const Register = () => {
                 At least 1 number
               </Typography>
             </Flex>
-            <Flex direction={"row"} gap={'8px'}>
-             {renderCheck(passwordConditions.lower && passwordConditions.upper)}
+            <Flex direction={"row"} gap={"8px"}>
+              {renderCheck(
+                passwordConditions.lower && passwordConditions.upper
+              )}
               <Typography
                 variant="body1"
                 color={colorPalette.gray[4]}

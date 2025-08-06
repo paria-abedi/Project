@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { Button, Flex, Typography } from "@/primitives";
 import Image from "next/image";
@@ -14,25 +15,65 @@ import {
 import { useForm, Controller } from "react-hook-form";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import useDeviceType from "@/libs/hooks/useDeviceType";
 import { useRouter } from "next/navigation";
 import { DesktopDatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
 import { useDropzone } from "react-dropzone";
+import Cookies from "js-cookie";
+import { useMutation } from "@tanstack/react-query";
+import { updateUser } from "@/api/auth/auth";
+
+type User={
+  id:string;
+  username:string;
+  email:string;
+  // country:string;
+  // password:string;
+  gender:string;
+  birthday:any;
+  avatar:any
+}
+
 
 const schema = yup.object().shape({
   name: yup.string().required("Name is required"),
   email: yup.string().email("Invalid email").required("Email is required"),
   gender: yup.string().required("Origin is required"),
-  date: yup
-    .string()
-    .required("Date is required")
-    .matches(/^\d{4}\d{2}\d{2}$/, "Date must be in format YYYY-MM-DD"),
+  date: yup.string().required("Date is required")
 });
 
 const Info = () => {
+    const [user,setUser]=useState<User | null>(null);
+const {
+    handleSubmit,
+    control,
+    reset,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(schema),
+    mode: "onChange",
+  }); 
+   useEffect(()=>{
+    const cookieUser=Cookies.get("user");
+    if(cookieUser){
+      try{
+        const parsed = JSON.parse(cookieUser);
+        setUser(parsed);
+        reset({
+          name: parsed.username,
+          email: parsed.email,
+          gender: parsed.gender,
+          date: parsed.birthday,
+        });
+        setPreviewUrl(parsed.avatar);
+      }catch(e){
+        console.log(e,"Error parsing user cookie")
+      }
+    }
+  },[reset])
   const [open, setOpen] = useState(false);
   const { isMobile } = useDeviceType();
   const router = useRouter();
@@ -50,24 +91,37 @@ const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     maxFiles: 1,
   });
 
-  const {
-    handleSubmit,
-    control,
-    formState: { errors },
-  } = useForm({
-    resolver: yupResolver(schema),
-    mode: "onChange",
-    defaultValues: {
-      name: "Stive Margry",
-      email: "Example@gmail.com",
-      gender: "Male",
-      date: "05/16/2025",
+  
+  const mutation=useMutation({
+    mutationFn:(data:User)=>{
+       if (!user) throw new Error("User not found");
+      return updateUser(user.id, data);
     },
-  });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onSuccess:()=>{
+      alert("User updated successfully!");
+      router.push("/profile");
+    },
+    onError: (error: any) => {
+      alert("Update failed: " + error.message);
+    },
+  })
   const onSubmit = (data: any) => {
-    console.log(data);
-    router.push("/profile");
+  const updatedData:User={
+    id: user?.id || "",
+     username: data.name,
+      email: data.email,
+      gender: data.gender,
+      birthday: data.date,
+      avatar: previewUrl,
+  };
+  console.log(data,"hellooo");
+    mutation.mutate(updatedData,{
+      onSuccess:()=>{
+        Cookies.set("user",JSON.stringify(updatedData));  
+      }
+    });
+    
+    
   };
 
   return (
